@@ -1,0 +1,379 @@
+@RestController:
+
+Used to define RESTful web services. It combines @Controller and @ResponseBody, making it a convenient way to define API endpoints.
+
+@Service
+This annotation marks a service class, where business logic is handled. In a payment project, you would typically implement payment processing logic in a service.
+
+@Autowired
+This annotation is used to inject dependencies into Spring beans. In a payment project, it’s used to inject services, repositories, and other components.
+
+@Entity
+The @Entity annotation is used to define a JPA entity, which represents a table in the database. In a payment project, this can be used to model a payment transaction.
+
+@Repository
+The @Repository annotation is used to define a Data Access Object (DAO) that interacts with the database. It is often paired with JPA repositories to manage database operations.
+
+
+@Transactional
+The @Transactional annotation is used to ensure that database operations are handled within a transaction context, which is critical in payment processing to maintain data consistency.
+
+@Valid
+Used to trigger validation of method parameters, typically used in combination with @RequestBody or @ModelAttribute to validate incoming request data.
+
+This ensures that the PaymentRequest object is validated according to constraints defined in its class, such as @NotNull, @Min, etc.
+
+ @PostMapping("/process")
+    public ResponseEntity<String> processPayment(@Valid @RequestBody PaymentRequest paymentRequest) {
+        // Process payment
+        return ResponseEntity.ok("Payment processed successfully.");
+    }
+	
+@Value
+Used to inject configuration values from application.properties or application.yml into fields of Spring beans.
+
+public class PaymentService {
+
+    @Value("${payment.gateway.url}")
+    private String gatewayUrl;
+
+    public void processPayment(PaymentRequest paymentRequest) {
+        // Use the gateway URL to send payment details
+        System.out.println("Processing payment using gateway: " + gatewayUrl);
+    }
+}
+
+@ConfigurationProperties
+Used for binding external configuration to a Java object, making it easy to manage complex configurations in Spring Boot projects.
+@Configuration
+@ConfigurationProperties(prefix = "payment")
+public class PaymentConfig {
+
+    private String gatewayUrl;
+    private String apiKey;
+
+    // Getters and setters
+}
+
+
+@Bean
+The @Bean annotation is used to declare a bean in a Spring configuration class. It is used to define methods that return a bean to be managed by the Spring container.
+
+@Configuration
+public class PaymentConfig {
+
+    @Bean
+    public PaymentGateway paymentGateway() {
+        return new PaymentGateway("http://payment-gateway-url.com");
+    }
+}
+
+@Component
+The @Component annotation is a generic annotation for marking a class as a Spring-managed component. It can be used in place of @Service, @Repository, or @Controller when a class doesn't fit into these specific categories.
+
+
+@EnableTransactionManagement
+This annotation enables Spring's transaction management capabilities, which is essential in a payment system to ensure atomicity and consistency of payment transactions.
+
+	This annotation is useful if you are manually configuring transaction management, typically in combination with @Transactional.
+
+@Configuration
+@EnableTransactionManagement
+public class TransactionConfig {
+}
+
+@ExceptionHandler
+Used to define methods that handle exceptions thrown during the processing of a request. In a payment project, this can be useful to handle errors like invalid payment details, payment gateway failures, etc.
+
+@RestControllerAdvice
+Here, if a PaymentException is thrown anywhere in the controller, it will be caught and processed by this handler.
+
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<String> handlePaymentException(PaymentException ex) {
+        return new ResponseEntity<>("Payment Error: " + ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+}
+
+@RequestParam
+The @RequestParam annotation is used to bind query parameters to method parameters. It is commonly used in GET requests to handle parameters like amount, currency, or status.
+
+@RestController
+public class PaymentController {
+
+    @GetMapping("/payments/status")
+    public ResponseEntity<List<PaymentTransaction>> getPaymentsByStatus(@RequestParam String status) {
+        List<PaymentTransaction> transactions = paymentService.getPaymentsByStatus(status);
+        return ResponseEntity.ok(transactions);
+    }
+}
+
+
+
+@PreAuthorize
+The @PreAuthorize annotation is used for method-level security. It can be used to define access control, ensuring that only authorized users can perform specific actions, like processing payments.
+
+Example:
+@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PostMapping("/process")
+public ResponseEntity<String> processPayment(@RequestBody PaymentRequest paymentRequest) {
+    paymentService.processPayment(paymentRequest);
+    return ResponseEntity.ok("Payment processed");
+}
+
+This ensures that only users with the role ROLE_ADMIN can access the processPayment endpoint.
+
+
+@Scheduled
+The @Scheduled annotation is used to schedule tasks to run at fixed intervals or cron expressions. In a payment system, it might be used for periodic operations like sending reminders for payments or processing recurring payments.
+@Scheduled(cron = "0 0 1 * * *") // Every 1st day of the month at 1 AM
+public void processRecurringPayments() {
+    paymentService.processRecurringPayments();
+}
+
+
+@Cacheable
+The @Cacheable annotation is used to cache the results of a method, which can improve performance by avoiding repeated processing of the same request. In a payment system, it could be used to cache payment status or transaction details.
+@Cacheable("paymentStatus")
+public PaymentTransaction getPaymentByTransactionId(String transactionId) {
+    return paymentRepository.findByTransactionId(transactionId);
+}
+This ensures that the results of getPaymentByTransactionId are cached, and subsequent requests with the same transactionId will return the cached result.
+
+
+@EnableAspectJAutoProxy
+The @EnableAspectJAutoProxy annotation is used to enable Aspect-Oriented Programming (AOP) in Spring. AOP can be used for tasks such as logging, monitoring, or transactions in a payment system.
+
+Example:
+
+@Configuration
+@EnableAspectJAutoProxy
+public class AppConfig {
+}
+This enables the use of aspects in your Spring configuration, such as logging payment requests or monitoring performance.
+
+
+@Entity (JPA / Hibernate)
+The @Entity annotation is used in JPA (Java Persistence API) to indicate that a class is an entity and should be mapped to a table in the database.
+
+
+@Table (JPA / Hibernate)
+The @Table annotation is used to specify the name of the table in the database that the entity should be mapped to. By default, the table name is the same as the class name, but you can use @Table to specify a custom name.
+
+
+@Id (JPA / Hibernate)
+The @Id annotation is used to mark the primary key field of an entity. Every entity must have a field marked with @Id
+
+@GeneratedValue (JPA / Hibernate)
+The @GeneratedValue annotation is used to specify the strategy for generating primary key values (e.g., auto-increment in a database).
+
+@Column (JPA / Hibernate)
+The @Column annotation is used to map a field to a column in the database. You can also use it to specify properties like column name, length, and nullable.
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "payments")
+public class Payment {
+    // Fields and methods
+	 @Id
+	 @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long transactionId;
+	
+	 @Column(name = "amount", nullable = false)
+    private Double amount;
+}
+
+@OneToMany (JPA / Hibernate)
+The @OneToMany annotation is used to define a one-to-many relationship between entities. It specifies that one entity (parent) can be associated with many entities (children).
+
+@Entity
+public class Customer {
+
+    @Id
+    private Long customerId;
+
+    @OneToMany(mappedBy = "customer")
+    private List<Payment> payments;
+	
+}
+
+
+@ManyToOne (JPA / Hibernate)
+The @ManyToOne annotation defines the inverse of a @OneToMany relationship. It specifies that many entities (child) can be associated with one entity (parent).
+
+The Payment class has a ManyToOne relationship with the Customer class, with a customer_id foreign key
+
+@Entity
+public class Payment {
+
+    @Id
+    private Long transactionId;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+}
+
+@ManyToMany (JPA / Hibernate)
+The @ManyToMany annotation is used to define a many-to-many relationship between entities. Each entity is associated with many instances of the other.
+
+
+A Payment can have multiple Tag objects, and a Tag can be associated with multiple Payments
+
+@Entity
+public class Payment {
+
+    @Id
+    private Long transactionId;
+
+    @ManyToMany
+    @JoinTable(
+        name = "payment_tags",
+        joinColumns = @JoinColumn(name = "payment_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private Set<Tag> tags;
+}
+
+@Entity
+public class Tag {
+
+    @Id
+    private Long tagId;
+
+    @ManyToMany(mappedBy = "tags")
+    private Set<Payment> payments;
+	
+	@Transient
+    private Double discount;
+	
+	@NotNull(message = "Transaction ID cannot be null")
+    private Long transactionId;
+	
+	 @Size(min = 1, max = 255, message = "Description must be between 1 and 255 characters")
+    private String description;
+}
+
+
+@Transient (JPA / Hibernate)
+The @Transient annotation marks a field that should not be persisted in the database. This can be useful for temporary data or computed values that you don't want to store in the database.
+
+
+@Size (JSR 303/JSR 380)
+The @Size annotation is used to define the size constraints on a string, collection, map, or array.
+
+
+@JsonProperty (Jackson)
+The @JsonProperty annotation is used to define the property name when serializing or deserializing JSON. It can be useful when the JSON field names do not match the Java field names.
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class PaymentRequest {
+
+    @JsonProperty("transaction_id")
+    private Long transactionId;
+
+    @JsonProperty("amount")
+    private Double amount;
+	
+	@JsonIgnore
+    private String sensitiveData;
+}
+
+@JsonIgnore (Jackson)
+The @JsonIgnore annotation is used to exclude a field from being serialized into JSON or deserialized from JSON.
+
+
+
+
+
+@Slf4j (Lombok)
+Lombok is a Java library that helps reduce boilerplate code. The @Slf4j annotation from Lombok automatically generates a logger field for your class.
+
+Example:
+
+java
+Copy code
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RestController
+public class PaymentController {
+
+    @PostMapping("/process")
+    public ResponseEntity<String> processPayment(@RequestBody PaymentRequest paymentRequest) {
+        log.info("Starting payment processing for amount: {}", paymentRequest.getAmount());
+        try {
+            // Simulate payment processing
+            paymentService.processPayment(paymentRequest);
+            log.info("Payment successfully processed for transaction ID: {}", paymentRequest.getTransactionId());
+            return ResponseEntity.ok("Payment processed successfully.");
+        } catch (Exception e) {
+            log.error("Error processing payment: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment processing failed.");
+        }
+    }
+}
+The @Slf4j annotation eliminates the need to manually declare the logger variable. Lombok generates the logger as a static final Logger instance.
+log.info(), log.error(), etc., are used to log messages at different log levels.
+
+
+
+
+@Log (Java 8 java.util.logging)
+If you're using java.util.logging (JUL) instead of SLF4J, you can use the @Log annotation (part of java.util.logging).
+
+Example:
+
+java
+Copy code
+import java.util.logging.Logger;
+
+@RestController
+public class PaymentController {
+
+    private static final Logger logger = Logger.getLogger(PaymentController.class.getName());
+
+    @PostMapping("/process")
+    public ResponseEntity<String> processPayment(@RequestBody PaymentRequest paymentRequest) {
+        logger.info("Processing payment for transaction ID: " + paymentRequest.getTransactionId());
+        try {
+            // Simulate payment processing
+            paymentService.processPayment(paymentRequest);
+            logger.info("Payment processed successfully.");
+            return ResponseEntity.ok("Payment processed successfully.");
+        } catch (Exception e) {
+            logger.severe("Error processing payment: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment failed.");
+        }
+    }
+}
+Logger.getLogger() creates a logger for the class. You use logger.info(), logger.severe() to log messages with different severity levels
+
+
+
+
+
+
+Spring Boot allows you to customize logging properties in the application.properties or application.yml file.
+
+Example (application.properties):
+
+properties
+Copy code
+# Set the log level to INFO for the entire application
+logging.level.root=INFO
+
+# Set the log level for a specific package
+logging.level.com.example.payment=DEBUG
+
+# Log file configuration
+logging.file.name=logs/payment-service.log
+
+# Log pattern customization
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+You can specify log levels (e.g., DEBUG, INFO, ERROR) for the root or specific packages.
+The log output can be directed to a file with logging.file.name.
+You can define a custom pattern for log messages.
